@@ -1,19 +1,18 @@
+#=====================
+# STEP 1: INSTALL AND LOAD REQUIRED PACKAGES
+#=====================
 install.packages("tidyverse")
 install.packages("lubridate")
-install.packages("ggplot2")
 install.packages("geosphere")
 library(tidyverse) 
 library(lubridate)
-library(ggplot2)
 library(geosphere)
 library(readr)
 library(tidyr)
 library(dplyr)
-getwd() #displays your working directory
-setwd("C:/Users/swara/OneDrive/Desktop/DA Course/Case Study - Track 1") 
 
 #=====================
-# STEP 1: COLLECT DATA
+# STEP 2: COLLECT DATA
 #=====================
 # Upload Divvy datasets (csv files) here
 july_2021 <- read_csv("202107-divvy-tripdata.csv")
@@ -30,7 +29,7 @@ may_2022 <- read_csv("202205-divvy-tripdata.csv")
 jun_2022 <- read_csv("202206-divvy-tripdata.csv")
 
 #====================================================
-# STEP 2: WRANGLE DATA AND COMBINE INTO A SINGLE FILE
+# STEP 3: WRANGLE DATA AND COMBINE INTO A SINGLE FILE
 #====================================================
 # Compare column names each of the files
 # While the names don't have to be in the same order, they DO need to match perfectly before we can use a command to join them into one file
@@ -62,8 +61,6 @@ str(feb_2022)
 str(mar_2022)
 str(apr_2022)
 
-# No issues found, below step not required.
-
 # Stack individual month's data frames into one big data frame
 all_trips <- bind_rows(july_2021, aug_2021, sep_2021, oct_2021, nov_2021, dec_2021, jan_2022, feb_2022, mar_2022, apr_2022, may_2022, jun_2022)
 
@@ -78,8 +75,10 @@ head(all_trips)  #See the first 6 rows of data frame.  Also tail(all_trips)
 str(all_trips)  #See list of columns and data types (numeric, character, etc)
 summary(all_trips)  #Statistical summary of data. Mainly for numerics
 
-# Add columns that list the date, month, day, and year of each ride
-# This will allow us to aggregate ride data for each month, day, or year ... before completing these operations we could only aggregate at the ride level
+# Add columns that list the date, hour, month, day, and year of each ride.
+# We will also add two calculated columns that shows trip duration and distance travelled for each trip.
+# This will allow us to aggregate ride data for each month, day, or year etc. Before completing these operations we could only aggregate at the ride level
+
 all_trips_v2 <- all_trips %>% 
   mutate(ride_length = as.numeric(difftime(ended_at, started_at, unit="mins"))) %>% 
   mutate(ride_distance = distHaversine(cbind(start_lng, start_lat), cbind(end_lng, end_lat))) %>% # returns distance in meters
@@ -93,19 +92,20 @@ str(all_trips)
 summary(all_trips)
 head(all_trips_v2)
 
-
-# Remove "bad" data
-# The dataframe includes several entries where ride_length was negative
+# Remove "Bad" data
+# The dataframe includes several entries where trip duration and distance was less than 0. We will remove those entries.
+# We will also remove entries where start station or end station names are missing.
 filtered_data <- all_trips_v2 %>% 
   filter(!is.na(start_station_name)) %>% 
   filter(!is.na(end_station_name)) %>% 
   filter(ride_length > 0)
   filter(ride_distance > 0)
 
-
+# We will also remove columns for start station ID and end station ID as they are redundant in this analysis.
 filtered_data <- filtered_data %>%  
   select(-c(start_station_id, end_station_id))
 
+# Export the filtered dataframe for further analysis and visualization
 final_data_v2 <- filtered_data %>% 
   group_by(member_casual, rideable_type, year, month, day, hour, start_lat, start_lng) %>% 
   summarise(number_of_rides =n(), avg_ride_length =  mean(ride_length), avg_ride_distance = mean(ride_distance))
