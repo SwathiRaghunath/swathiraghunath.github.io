@@ -3,7 +3,7 @@
 #=====================
 install.packages("tidyverse")
 install.packages("lubridate")
-install.packages("geosphere")
+install.packages("geosphere") # to calculate distance from lat and long data
 library(tidyverse) 
 library(lubridate)
 library(geosphere)
@@ -67,8 +67,6 @@ str(feb_2022)
 str(mar_2022)
 str(apr_2022)
 
-
-
 # Stack individual month's data frames into one big data frame
 
 all_trips <- bind_rows(july_2021, aug_2021, sep_2021, oct_2021, nov_2021, dec_2021, jan_2022, feb_2022, mar_2022, apr_2022, may_2022, jun_2022)
@@ -126,3 +124,5 @@ final_data_v2 <- filtered_data %>%
   group_by(member_casual, rideable_type, year, month, day, hour, start_lat, start_lng) %>% 
   summarise(number_of_rides =n(), avg_ride_length =  mean(ride_length), avg_ride_distance = mean(ride_distance))
 write_csv(final_data, file = 'C:\\Users\\swara\\OneDrive\\Desktop\\DA Course\\Case Study - Track 1\\final_data.csv')
+
+
